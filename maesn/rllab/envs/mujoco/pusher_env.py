@@ -47,8 +47,8 @@ class PusherEnvRandomized(MujocoEnv, Serializable):
 
     def __init__(self, choice=None):
         self.choice = choice
-        all_goals = pickle.load(open("/root/code/rllab/rllab/envs/mujoco/pusher_trainSet_100Tasks.pkl", "rb"))
-        #all_goals = pickle.load(open("/home/russellm/generativemodel_tasks/maml_rl_fullversion/rllab/envs/mujoco/pusher_trainSet_100Tasks.pkl", "rb"))
+        #all_goals = pickle.load(open("/root/code/rllab/rllab/envs/mujoco/pusher_trainSet_100Tasks.pkl", "rb"))
+        all_goals = pickle.load(open("/home/russellm/generativemodel_tasks/maml_rl_fullversion/rllab/envs/mujoco/pusher_trainSet_100Tasks.pkl", "rb"))
         self.all_goals = all_goals
         super(PusherEnvRandomized, self).__init__()
 

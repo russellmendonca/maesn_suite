@@ -27,7 +27,7 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
 
     def __init__(self, goal= None, *args, **kwargs):
         self._goal_idx = goal
-        self.goals = pickle.load(open("/root/code/rllab/rllab/envs/mujoco/goals_ant.pkl", "rb"))
+        self.goals = pickle.load(open("/root/code/rllab/rllab/envs/goals/ant_trainSet.pkl", "rb"))
         #self.goals = pickle.load(open("/home/russellm/generativemodel_tasks/maml_rl_fullversion/rllab/envs/mujoco/goals_ant.pkl", "rb"))
         super(AntEnvRandGoalRing, self).__init__(*args, **kwargs)
         Serializable.__init__(self, *args, **kwargs)
@@ -46,13 +46,12 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
 
     @overrides
     def reset(self, init_state=None, reset_args=None, **kwargs):
+        
         goal_idx = reset_args
         if goal_idx is not None:
             self._goal_idx = goal_idx
         elif self._goal_idx is None:
             self._goal_idx = np.random.randint(1)
-
-
         self.reset_mujoco(init_state)
         self.model.forward()
         self.current_com = self.model.data.com_subtree[0]
@@ -64,13 +63,8 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
     def step(self, action):
         self.forward_dynamics(action)
         com = self.get_body_com("torso")
-    
-
-
-        goal_reward = -np.linalg.norm(com[:2] - self.goals[self._goal_idx]) + 4.0 # make it happy, not suicidal
-
-        distance_reward = -np.linalg.norm(com[:2] - self.goals[self._goal_idx])
-    
+        # ref_x = x + self._init_torso_x
+        goal_reward = -np.sum(np.abs(com[:2] - self.goals[self._goal_idx])) + 4.0 # make it happy, not suicidal
         lb, ub = self.action_bounds
         scaling = (ub - lb) * 0.5
         ctrl_cost = 0.5 * 1e-2 * np.sum(np.square(action / scaling))
@@ -83,7 +77,8 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
             and state[2] >= 0.2 and state[2] <= 1.0
         done = not notdone
         ob = self.get_current_obs()
-        return Step(ob, float(reward), done, distance_reward = distance_reward)
+        infos = {'goal': self._goal_idx}
+        return Step(ob, float(reward), done, **infos)
 
     @overrides
     def log_diagnostics(self, paths, prefix=''):

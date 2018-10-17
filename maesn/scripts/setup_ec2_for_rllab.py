@@ -28,7 +28,7 @@ AWS_REGION_NAME = "us-west-1"
 if USE_GPU:
     DOCKER_IMAGE = "dementrock/rllab3-shared-gpu"
 else:
-    DOCKER_IMAGE = "dementrock/rllab3-shared"
+    DOCKER_IMAGE = "russellm888/rllab3"
 
 DOCKER_LOG_DIR = "/tmp/expt"
 
@@ -37,9 +37,11 @@ AWS_S3_PATH = "s3://$s3_bucket_name/rllab/experiments"
 AWS_CODE_SYNC_S3_PATH = "s3://$s3_bucket_name/rllab/code"
 
 ALL_REGION_AWS_IMAGE_IDS = {
-    "us-west-1": "ami-ad81c8cd",
-    "us-west-2": "ami-7ea27a1e",
-    "us-east-1": "ami-6b99d57c"
+
+    "us-east-1" : "ami-0bb2bf4857db440e0"
+    "us-east-2" : "ami-09cd8ec62b2dbb3d6"
+    "us-west-1" : "ami-05e00979871a39188"
+    "us-west-2" : "ami-0111a16ab53cb7ea9"    
 }
 
 AWS_IMAGE_ID = ALL_REGION_AWS_IMAGE_IDS[AWS_REGION_NAME]
@@ -203,7 +205,7 @@ def setup_s3():
         aws_access_key_id=ACCESS_KEY,
         aws_secret_access_key=ACCESS_SECRET,
     )
-    import pdb; pdb.set_trace()
+    
     try:
         s3_client.create_bucket(
             ACL='private',
@@ -222,7 +224,7 @@ def setup_s3():
 
 def setup_ec2():
     #for region in ["us-east-1", "us-west-1", "us-west-2"]:
-    for region in ["us-west-1"]:
+    for region in ["us-west-1" , 'us-west-2' , 'us-east-1']:
         print("Setting up region %s" % region)
 
         ec2 = boto3.resource(
@@ -254,7 +256,7 @@ def setup_ec2():
 
         ALL_REGION_AWS_SECURITY_GROUP_IDS[region] = [security_group.id]
 
-        import pdb; pdb.set_trace()
+        
 
         ec2_client.create_tags(Resources=[security_group.id], Tags=[{'Key': 'Name', 'Value': 'rllab-sg'}])
         try:

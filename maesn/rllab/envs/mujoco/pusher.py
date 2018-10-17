@@ -41,18 +41,21 @@ def save_goal_samples(num_tasks, filename):
 # all_goals = save_goal_samples(num_tasks)
 # import IPython
 # IPython.embed()
-class PusherEnvRandomized(MujocoEnv, Serializable):
+class PusherEnv(MujocoEnv, Serializable):
 
     FILE = 'pusher_env.xml'
 
     def __init__(self, choice=None):
         self.choice = choice
-        all_goals = pickle.load(open("/home/russellm/generativemodel_tasks/maml_rl_fullversion/rllab/envs/mujoco/pusher_valSet1.pkl", "rb"))
+        all_goals = pickle.load(open("/root/code/rllab/rllab/envs/goals/pusher_trainSet.pkl", "rb"))
+        #all_goals = pickle.load(open("/home/russellm/generativemodel_tasks/maml_rl_fullversion/rllab/envs/mujoco/pusher_trainSet_100Tasks.pkl", "rb"))
         self.all_goals = all_goals
-        super(PusherEnvRandomized, self).__init__()
+        super(PusherEnv, self).__init__()
 
     def sample_goals(self, num_goals):
-       return np.asarray(range(num_goals))
+        return np.array([np.random.randint(0, num_goals*5) for i in range(num_goals)])
+
+       #return np.asarray(range(num_goals))
        # return np.random.choice(range(num_tasks*5), size=(num_goals,))
 
     def reset(self, reset_args=None):
@@ -105,12 +108,7 @@ class PusherEnvRandomized(MujocoEnv, Serializable):
         goal_pos = self.goal[1:3]
         dist_to_block = np.linalg.norm(curr_gripper_pos -  curr_block_pos)
         block_dist = np.linalg.norm(goal_pos - curr_block_pos)
-        goal_dist = np.linalg.norm(goal_pos)
-        if block_dist < 0.2:
-        
-            reward = - 5*block_dist
-        else:
-            reward = -5*goal_dist 
+        reward =  - 5*block_dist 
         done = False
         return Step(next_obs, reward, done)
 

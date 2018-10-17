@@ -17,23 +17,20 @@ def generate_goals(num_goals):
     ypos = radius*np.sin(angle)
     return np.concatenate([xpos[:, None], ypos[:, None]], axis=1)
 
-#num_goals = 100
+#num_goals = 40
 #goals = generate_goals(num_goals)
 #import pickle
-#pickle.dump(goals, open("100goals_wheeled_valSet.pkl", "wb"))
+#pickle.dump(goals, open("goals_wheeled.pkl", "wb"))
 
-class WheeledEnvGoal(MujocoEnv, Serializable):
+class WheeledEnv(MujocoEnv, Serializable):
 
     FILE = 'wheeled.xml'
 
     def __init__(self, goal=None, *args, **kwargs):
-
-        self.goals = pickle.load(open("/root/code/rllab/rllab/envs/mujoco/goals100_wheeled_rad2.pkl", "rb"))
+        self.goals = pickle.load(open("/root/code/rllab/rllab/envs/goals/wheeled_trainSet.pkl", "rb"))
         #self.goals = pickle.load(open("/home/russellm/maml_rl_baseline_test/rllab/envs/mujoco/goals100_wheeled_rad2.pkl", "rb"))
-        #self.goals = pickle.load(open("/root/code/rllab/rllab/envs/mujoco/100goals_wheeled_rad2_ValSet.pkl", "rb"))
-        #self.goals = pickle.load(open("/home/russellm/maml_rl_baseline_test/rllab/envs/mujoco/100goals_wheeled_rad2_ValSet.pkl", "rb"))
         self._goal_idx = goal 
-        super(WheeledEnvGoal, self).__init__(*args, **kwargs)
+        super(WheeledEnv, self).__init__(*args, **kwargs)
         Serializable.__init__(self, *args, **kwargs)
 
     def get_current_obs(self):
@@ -43,7 +40,7 @@ class WheeledEnvGoal(MujocoEnv, Serializable):
         ])
 
     def sample_goals(self, num_goals):
-        return np.random.choice(np.array(range(num_goals)), num_goals)
+        return np.random.choice(np.array(range(num_goals*5)), num_goals)
         #return np.array(range(num_goals))
 
     @overrides
@@ -68,12 +65,7 @@ class WheeledEnvGoal(MujocoEnv, Serializable):
         self.forward_dynamics(action)
         next_obs = self.get_current_obs()
         ctrl_cost = 1e-1 * 0.5 * np.sum(np.square(action))
-        if np.linalg.norm(next_obs[:2] -self.goals[self._goal_idx] ) > 0.8 :
-            reward = -np.linalg.norm(self.goals[self._goal_idx]) - ctrl_cost
-            distanceRew = -np.linalg.norm(self.goals[self._goal_idx])
-        else:
-            reward = -np.linalg.norm(next_obs[:2] - self.goals[self._goal_idx]) - ctrl_cost
-            distanceRew = -np.linalg.norm(next_obs[:2] - self.goals[self._goal_idx])
-            
+        distance_rew = -np.linalg.norm(next_obs[:2] - self.goals[self._goal_idx])
+        reward = distance_rew - ctrl_cost
         done = False
-        return Step(next_obs, reward, done, distanceReward = distanceRew)
+        return Step(next_obs, reward, done, distanceReward = distance_rew )
