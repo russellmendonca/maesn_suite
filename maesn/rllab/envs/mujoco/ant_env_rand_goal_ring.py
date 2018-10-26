@@ -25,10 +25,15 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
 
     FILE = 'low_gear_ratio_ant.xml'
 
-    def __init__(self, goal= None, *args, **kwargs):
+    def __init__(self, goal= None, sparse= False, train = True,  *args, **kwargs):
         self._goal_idx = goal
-        self.goals = pickle.load(open("/root/code/rllab/rllab/envs/goals/ant_trainSet.pkl", "rb"))
-        #self.goals = pickle.load(open("/home/russellm/generativemodel_tasks/maml_rl_fullversion/rllab/envs/mujoco/goals_ant.pkl", "rb"))
+        if train :
+            assert sparse == False
+            self.goals = pickle.load(open('/root/code/rllab/rllab/envs/goals/ant_trainSet.pkl', "rb"))
+        else:
+            assert sparse == True
+            self.goals = pickle.load(open('/root/code/rllab/rllab/envs/goals/ant_valSet.pkl' , 'rb'))
+        self.sparse = sparse
         super(AntEnvRandGoalRing, self).__init__(*args, **kwargs)
         Serializable.__init__(self, *args, **kwargs)
 
@@ -61,10 +66,15 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
 
 
     def step(self, action):
+        #print(self.sparse)
         self.forward_dynamics(action)
         com = self.get_body_com("torso")
         # ref_x = x + self._init_torso_x
-        goal_reward = -np.sum(np.abs(com[:2] - self.goals[self._goal_idx])) + 4.0 # make it happy, not suicidal
+        if self.sparse and np.linalg.norm(com[:2] - self.goals[self._goal_idx]) > 0.8:
+            goal_reward = -np.sum(np.abs(self.goals[self._goal_idx])) + 4.0 
+        else:
+            goal_reward = -np.sum(np.abs(com[:2] - self.goals[self._goal_idx])) + 4.0 # make it happy, not suicidal
+      
         lb, ub = self.action_bounds
         scaling = (ub - lb) * 0.5
         ctrl_cost = 0.5 * 1e-2 * np.sum(np.square(action / scaling))

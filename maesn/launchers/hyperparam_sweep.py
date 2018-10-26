@@ -16,8 +16,8 @@ class VG(VariantGenerator):
 
     @variant
     def fast_batch_size(self):
-        return [20 , 50]
-        #return [5]
+        #return [20 , 50]
+        return [5]
     @variant
     def fast_learning_rate(self):
         return [0]
@@ -33,7 +33,8 @@ class VG(VariantGenerator):
     @variant
     def kl_weighting(self):
         #return [0.1 , 0.5]
-        return [0 , 0.01, 0.05 , 0.1]
+        return [0.01]
+        #return [0 , 0.01, 0.05 , 0.1]
 
     @variant
     def latent_dim(self):

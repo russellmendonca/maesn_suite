@@ -13,7 +13,7 @@ from rllab.envs.mujoco.wheeled_robot import WheeledEnv
 from rllab.envs.mujoco.pusher import PusherEnv
 from rllab.envs.mujoco.ant_env_rand_goal_ring import AntEnvRandGoalRing
 
-mode = 'ec2'
+mode = 'local_docker'
 #mode = 'local'
 parser = argparse.ArgumentParser()
 parser.add_argument('algo' , type=str , help = 'Maesn or LSBaseline')
@@ -70,7 +70,6 @@ for v in variants:
             num_total_tasks=num_total_tasks,
             init_std = v['init_std']
         )
-        v['fast_learning_rate'] = 0
     else:
         raise AssertionError('Not Implemented')
     ########################################################
@@ -98,7 +97,7 @@ for v in variants:
     )
     run_experiment_lite(
         algo.train(),
-        n_parallel=4,
+        n_parallel=1,
         snapshot_mode="all",
         #python_command='python3',
         seed=v['seed'],

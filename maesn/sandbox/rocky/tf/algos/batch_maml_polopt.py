@@ -122,11 +122,10 @@ class BatchMAMLPolopt(RLAlgorithm):
         self.reset_step = reset_step
 
         if sampler_cls is None:
-            # if singleton_pool.n_parallel > 1:
-            #     sampler_cls = BatchSampler
-            # else:
-            #sampler_cls = BatchSampler
-            sampler_cls = VectorizedSampler
+            if singleton_pool.n_parallel > 1:
+                assert False , 'parallel sampling not implemented'
+            else:
+                sampler_cls = VectorizedSampler
         if sampler_args is None:
             sampler_args = dict()
         sampler_args['n_envs'] = self.meta_batch_size
@@ -212,23 +211,16 @@ class BatchMAMLPolopt(RLAlgorithm):
                             a_op = par.assign(load_policy_vals_actual[par.name])
                             sess.run(a_op)
                             print(par.name)
-                        
-
-
             # Lmeans_init_stepsize = sess.run(self.policy.all_params['latent_means_stepsize'])
             # Lstds_init_stepsize = sess.run(self.policy.all_params['latent_stds_stepsize'])
-
             # sess.run(tf.assign(self.policy.all_params['latent_means_stepsize'], Lmeans_init_stepsize/10))
             # sess.run(tf.assign(self.policy.all_params['latent_stds_stepsize'], Lstds_init_stepsize/10))
-
-       
             self.start_worker()
             start_time = time.time()
             for itr in range(self.start_itr, self.n_itr):
                 itr_start_time = time.time()
                 with logger.prefix('itr #%d | ' % itr):
                     logger.log("Sampling set of tasks/goals for this meta-batch...")
-
                     env = self.env
                     while 'sample_goals' not in dir(env):
                         env = env.wrapped_env
@@ -246,7 +238,6 @@ class BatchMAMLPolopt(RLAlgorithm):
                         #import ipdb
                         #ipdb.set_trace()                        
                         paths = self.obtain_samples(itr, reset_args=learner_env_goals, log_prefix=str(step))
-                        
                         if step==0 and self.visitationFolder!=None:
                             self.plotVisitationsFunc(paths, self.visitationFolder, self.visitationFile )
                             

@@ -26,10 +26,16 @@ class WheeledEnv(MujocoEnv, Serializable):
 
     FILE = 'wheeled.xml'
 
-    def __init__(self, goal=None, *args, **kwargs):
-        self.goals = pickle.load(open("/root/code/rllab/rllab/envs/goals/wheeled_trainSet.pkl", "rb"))
-        #self.goals = pickle.load(open("/home/russellm/maml_rl_baseline_test/rllab/envs/mujoco/goals100_wheeled_rad2.pkl", "rb"))
+    def __init__(self, goal=None, sparse = False , train = True,  *args, **kwargs):
         self._goal_idx = goal 
+        if train :
+            assert sparse == False
+            self.goals =  pickle.load(open("/root/code/rllab/rllab/envs/goals/wheeled_trainSet.pkl", "rb"))
+        else:
+            assert sparse == True
+            self.goals = pickle.load(open('/root/code/rllab/rllab/envs/goals/wheeled_valSet.pkl' , 'rb'))
+        
+        self.sparse = sparse
         super(WheeledEnv, self).__init__(*args, **kwargs)
         Serializable.__init__(self, *args, **kwargs)
 
@@ -65,7 +71,11 @@ class WheeledEnv(MujocoEnv, Serializable):
         self.forward_dynamics(action)
         next_obs = self.get_current_obs()
         ctrl_cost = 1e-1 * 0.5 * np.sum(np.square(action))
-        distance_rew = -np.linalg.norm(next_obs[:2] - self.goals[self._goal_idx])
-        reward = distance_rew - ctrl_cost
+       
+        if self.sparse and np.linalg.norm(next_obs[:2] -self.goals[self._goal_idx] ) > 0.8 :
+            reward = -np.linalg.norm(self.goals[self._goal_idx]) - ctrl_cost
+        else:
+            reward = -np.linalg.norm(next_obs[:2] - self.goals[self._goal_idx]) - ctrl_cost 
+           
         done = False
-        return Step(next_obs, reward, done, distanceReward = distance_rew )
+        return Step(next_obs, reward, done)

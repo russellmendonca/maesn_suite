@@ -206,18 +206,12 @@ class VPG(BatchPolopt, Serializable):
         self.policy.all_param_vals['latent_means'] = result['latent_means']
         self.policy.all_param_vals['latent_stds'] = result['latent_stds'] 
 
-        #import ipdb
-        #ipdb.set_trace()
+       
         if itr>=2 :
             self.default_step_size/=2
-            
-            #if min( self.policy.all_param_vals['latent_means_stepsize']) >= 1:
-       #     self.policy.all_param_vals['latent_means_stepsize'] /= 2
-            #if min (self.policy.all_param_vals['latent_stds_stepsize']) >= 1:
-       #     self.policy.all_param_vals['latent_stds_stepsize'] /= 2
 
 
-
+        
         self.policy.assign_params(self.policy.all_params, self.policy.all_param_vals)
        
 

@@ -45,11 +45,16 @@ class PusherEnv(MujocoEnv, Serializable):
 
     FILE = 'pusher_env.xml'
 
-    def __init__(self, choice=None):
+    def __init__(self, choice=None, sparse = False , train = True):
         self.choice = choice
-        all_goals = pickle.load(open("/root/code/rllab/rllab/envs/goals/pusher_trainSet.pkl", "rb"))
+        if train :
+            assert sparse == False
+            self.all_goals =  pickle.load(open("/root/code/rllab/rllab/envs/goals/pusher_trainSet.pkl", "rb"))
+        else:
+            assert sparse == True
+            self.all_goals = pickle.load(open('/root/code/rllab/rllab/envs/goals/pusher_valSet.pkl' , 'rb'))
+        self.sparse = sparse
         #all_goals = pickle.load(open("/home/russellm/generativemodel_tasks/maml_rl_fullversion/rllab/envs/mujoco/pusher_trainSet_100Tasks.pkl", "rb"))
-        self.all_goals = all_goals
         super(PusherEnv, self).__init__()
 
     def sample_goals(self, num_goals):
@@ -108,7 +113,12 @@ class PusherEnv(MujocoEnv, Serializable):
         goal_pos = self.goal[1:3]
         dist_to_block = np.linalg.norm(curr_gripper_pos -  curr_block_pos)
         block_dist = np.linalg.norm(goal_pos - curr_block_pos)
-        reward =  - 5*block_dist 
+        goal_dist = np.linalg.norm(goal_pos)
+        
+        if self.sparse and block_dist > 0.2:
+            reward = - 5*goal_dist
+        else:
+            reward = -5*block_dist 
         done = False
         return Step(next_obs, reward, done)
 

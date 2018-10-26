@@ -1,0 +1,3 @@
+MaesnAnt
+fbs_50_flr_1_mbs_20_mlr_0.01_kl_0.1_ldim_2_seed_0
+
