@@ -40,7 +40,7 @@ initial_params_file = '/root/code/rllab/metaTrainedPolicies/' + args.initial_par
 n_itr = 100
 ldim = args.latent_dim ;  default_step = args.learning_rate
 
-goals = np.array(range(1))
+goals = np.array(range(30))
 for counter, goal in enumerate(goals):
 
     ####################Env Selection#####################
