@@ -9,7 +9,8 @@ The MAESN code uses the TensorFlow rllab version, so be sure to install TensorFl
 
 ### Usage
 Scripts for running the experiments found in the paper are located in `launchers/`. The scripts are setup to use local_docker or ec2.
-For training: `python train.py algo --env envName`, where algo can be Maesn or LSBaseline, envName can be Ant, Pusher or Wheeled
+
+For training : `python train.py algo --env envName`, where algo can be Maesn or LSBaseline, envName can be Ant, Pusher or Wheeled
 Hyperparameters can be set in the hyperparam_sweep file. For the LSBaseline, the `fast_learning_rate` must be set to 0.
 
 For testing : `python test.py algo --env envName --initial_params_file fileName --learning_rate rate --latent_dim latentDim`
