@@ -24,12 +24,14 @@ Make sure that the rate and latentDim at testing are the same as the `fast_learn
 
 ### aws ec2
 
+
 The following image IDs are known to work
+```
 us-east-1 : ami-0bb2bf4857db440e0 
 us-west-1 : ami-05e00979871a39188
 us-west-2 : ami-0111a16ab53cb7ea9
-
-Docker Image : russellm888/rllab3   
+```
+Docker Image : `russellm888/rllab3`   
 
 # rllab
 
