@@ -1,4 +1,4 @@
-from sandbox.rocky.tf.algos.maml_trpo import MAMLTRPO
+from sandbox.rocky.tf.algos.maesn_trpo import MAESN_TRPO
 from rllab.baselines.linear_feature_baseline import LinearFeatureBaseline
 from rllab.baselines.zero_baseline import ZeroBaseline
 from rllab.envs.normalized_env import normalize
@@ -14,10 +14,10 @@ from rllab.envs.mujoco.pusher import PusherEnv
 from rllab.envs.mujoco.ant_env_rand_goal_ring import AntEnvRandGoalRing
 
 mode = 'local_docker'
-#mode = 'local'
+#mode = 'ec2'
 parser = argparse.ArgumentParser()
 parser.add_argument('algo' , type=str , help = 'Maesn or LSBaseline')
-parser.add_argument('env', type=str,
+parser.add_argument('--env', type=str,
                     help='currently supported envs are Pusher, Wheeled and Ant')
 args = parser.parse_args()
 assert args.algo in ['Maesn' , 'LSBaseline']
@@ -77,7 +77,7 @@ for v in variants:
 
     baseline = LinearFeatureBaseline(env_spec=env.spec)
 
-    algo = MAMLTRPO(
+    algo = MAESN_TRPO(
         env=env,
         policy=policy,
         baseline=baseline,

@@ -13,11 +13,13 @@ from rllab.algos.base import RLAlgorithm
 from sandbox.rocky.tf.policies.base import Policy
 from sandbox.rocky.tf.samplers.batch_sampler import BatchSampler
 from sandbox.rocky.tf.samplers.vectorized_sampler import VectorizedSampler
-from sandbox.rocky.tf.samplers.vectorized_sampler_noNoise import VectorizedSamplerNoNoise
 from sandbox.rocky.tf.spaces import Discrete
 from rllab.sampler.stateful_pool import singleton_pool
 from sandbox.rocky.tf.distributions.diagonal_gaussian import DiagonalGaussian
-class BatchMAMLPolopt(RLAlgorithm):
+
+import pickle
+
+class BatchMAESNPolopt(RLAlgorithm):
     """
     Base class for batch sampling-based policy optimization methods, with maml.
     This includes various policy gradient methods like vpg, npg, ppo, trpo, etc.
@@ -49,7 +51,6 @@ class BatchMAMLPolopt(RLAlgorithm):
             sampler_cls=None,
             sampler_args=None,
             force_batch_sampler=False,
-            use_maml=True,
             load_policy=None,
             latent_dim=4,
             num_total_tasks=100,
@@ -58,7 +59,8 @@ class BatchMAMLPolopt(RLAlgorithm):
             plottingFolder = None,
             visitationFolder = None,
             visitationFile = None,
-            addedNoise = True,
+            load_policy_vals = None,
+            reset_step = 'False',
             **kwargs
     ):
         """
@@ -115,17 +117,14 @@ class BatchMAMLPolopt(RLAlgorithm):
         self.plottingFolder = plottingFolder
         self.visitationFolder = visitationFolder
         self.visitationFile = visitationFile
-        self.addedNoise = addedNoise
+        self.load_policy_vals = load_policy_vals
+        self.reset_step = reset_step
 
         if sampler_cls is None:
-            # if singleton_pool.n_parallel > 1:
-            #     sampler_cls = BatchSampler
-            # else:
-            #sampler_cls = BatchSampler
-            if self.addedNoise:
-                sampler_cls = VectorizedSampler
+            if singleton_pool.n_parallel > 1:
+                assert False , 'parallel sampling not implemented'
             else:
-                sampler_cls = VectorizedSamplerNoNoise
+                sampler_cls = VectorizedSampler
         if sampler_args is None:
             sampler_args = dict()
         sampler_args['n_envs'] = self.meta_batch_size
@@ -144,7 +143,6 @@ class BatchMAMLPolopt(RLAlgorithm):
         # This obtains samples using self.policy, and calling policy.get_actions(obses)
         # return_dict specifies how the samples should be returned (dict separates samples
         # by task)
-        
         paths = self.sampler.obtain_samples(itr, reset_args=reset_args, task_idxs=reset_args, return_dict=True, log_prefix=log_prefix)
         #paths = self.sampler.obtain_samples(itr, reset_args=reset_args)
 
@@ -171,7 +169,6 @@ class BatchMAMLPolopt(RLAlgorithm):
                 self.policy = loaded['policy']
                 self.baseline = loaded['baseline']
             
-            
             self.init_opt()
             # initialize uninitialized vars  (only initialize vars that were not loaded)
             uninit_vars = []
@@ -185,40 +182,85 @@ class BatchMAMLPolopt(RLAlgorithm):
 
             self.start_worker()
             start_time = time.time()
-            
-            
-            assign_op_mean = self.policy.all_params['latent_means'].assign(np.zeros((self.num_total_tasks, self.latent_dim)))
-            assign_op_std = self.policy.all_params['latent_stds'].assign(np.zeros((self.num_total_tasks, self.latent_dim)))
-            sess.run(assign_op_mean)
-            sess.run(assign_op_std)
-            
-            
-            env = self.env
-
-            while 'sample_goals' not in dir(env):
-                env = env.wrapped_env
-            learner_env_goals = env.sample_goals(self.meta_batch_size)
-                   
-            
+            for itr in range(self.start_itr, self.n_itr):
+                itr_start_time = time.time()
+                with logger.prefix('itr #%d | ' % itr):
+                    logger.log("Sampling set of tasks/goals for this meta-batch...")
+                    env = self.env
+                    while 'sample_goals' not in dir(env):
+                        env = env.wrapped_env
+                    learner_env_goals = env.sample_goals(self.meta_batch_size)
                     #learner_env_goals = np.array([3])
-            self.policy.switch_to_init_dist()  # Switch to pre-update policy
+                    self.policy.switch_to_init_dist()  # Switch to pre-update policy
 
-         
-           
-            
-                                  
-            paths = self.obtain_samples(itr=0, reset_args=learner_env_goals)
-            
-            
-            for task in range(self.meta_batch_size):
-                for traj in range(self.num_trajs):
-                    x = paths[task][traj]["observations"][:,0]
-                    y = paths[task][traj]["observations"][:,1]
-                    plt.plot(x,y)
-            plt.xlim(-2, 2)
-            plt.ylim(-.5,2.5)
-        
-            plt.savefig("/home/russellm/Plots/"+self.visitationFolder+"/"+self.visitationFile+".png")
+                    all_samples_data, all_paths, all_samples_data_latent = [], [], []
+                   
+                    for step in range(self.num_grad_updates+1):
+                        #if step > 0:
+                        #    import pdb; pdb.set_trace() # test param_vals functions.
+                        logger.log('** Step ' + str(step) + ' **')
+                        logger.log("Obtaining samples...")
+                        #import ipdb
+                        #ipdb.set_trace()                        
+                        paths = self.obtain_samples(itr, reset_args=learner_env_goals, log_prefix=str(step))
+                        if step==0 and self.visitationFolder!=None:
+                            self.plotVisitationsFunc(paths, self.visitationFolder, self.visitationFile )
+                            
+                        all_paths.append(paths)
+                        logger.log("Processing samples...")
+                        samples_data = {}
+                        samples_data_latent = {}
+                        for key in paths.keys():  # the keys are the tasks
+                            # don't log because this will spam the consol with every task.
+                            samples_data[key], samples_data_latent[key] = self.process_samples(itr, paths[key], log=False, task_idx=learner_env_goals[key], noise_opt=False, joint_opt=True)
+                            fobj = open("pertask_train.txt", "a")
+                            
+                            avg_return = np.mean([sum(path["rewards"]) for path in paths[key]])
+                            return_length = len(paths[key])
+                            fobj.write(str(avg_return)+" "+str(return_length)+"\n")
+                            fobj.close()
+ 
+                        all_samples_data.append(samples_data)
+                        all_samples_data_latent.append(samples_data_latent)
+                        # for logging purposes only
+                        self.process_samples(itr, flatten_list(paths.values()), prefix=str(step), log=True, task_idx=0)
+                        #import ipdb
+                        #ipdb.set_trace()
+                        logger.log("Logging diagnostics...")
+                        self.log_diagnostics(flatten_list(paths.values()), prefix=str(step))
+                        if step < self.num_grad_updates:
+                            logger.log("Computing policy updates...")
+                            if self.plottingFolder==None:
+                                self.policy.compute_updated_dists(samples_data, samples_data_latent)
+                            else:
+                                self.policy.plotLatents(self.plottingFolder, str(self.kl_weighting),str(itr), "0",  sess.run(self.policy.all_params['latent_means']), np.exp(sess.run(self.policy.all_params['latent_stds'])))
+                                self.policy.compute_updated_dists(samples_data, samples_data_latent, [self.plottingFolder, self.kl_weighting, itr])
+                                
+                    logger.log("Optimizing policy...")
+                    # This needs to take all samples_data so that it can construct graph for meta-optimization.
+                    self.optimize_policy(itr, all_samples_data, all_samples_data_latent)
+                    logger.log("Saving snapshot...")
+                    params = self.get_itr_snapshot(itr, all_samples_data[-1])  # , **kwargs)
+                    if self.store_paths:
+                        params["paths"] = all_samples_data[-1]["paths"]
+                    logger.save_itr_params(itr, params)
+                    logger.log("Saved")
+                    logger.record_tabular('Time', time.time() - start_time)
+                    logger.record_tabular('ItrTime', time.time() - itr_start_time)
+
+                    logger.dump_tabular(with_prefix=False)
+        self.shutdown_worker()
+    
+    def plotVisitationsFunc(self, paths, visitationFolder, visitationFile):
+        plt.clf()
+        for task in range(self.meta_batch_size):
+            for traj in range(self.num_trajs):
+                x = paths[task][traj]["observations"][:,0]
+                y = paths[task][traj]["observations"][:,1]
+                plt.plot(x,y)
+        plt.xlim(0,1)
+        plt.ylim(-0.5,0.5)
+        plt.savefig("/home/russellm/Plots/"+visitationFolder+"/"+visitationFile+".png")
     
     def log_diagnostics(self, paths, prefix):
         self.env.log_diagnostics(paths, prefix)

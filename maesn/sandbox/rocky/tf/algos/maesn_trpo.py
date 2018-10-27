@@ -1,10 +1,10 @@
 
 
-from sandbox.rocky.tf.algos.maml_npo_plotter import MAMLNPO
+from sandbox.rocky.tf.algos.maesn_npo import MAESN_NPO
 from sandbox.rocky.tf.optimizers.conjugate_gradient_optimizer import ConjugateGradientOptimizer
 
 
-class MAMLTRPO(MAMLNPO):
+class MAESN_TRPO(MAESN_NPO):
     """
     Trust Region Policy Optimization
     """
@@ -18,4 +18,4 @@ class MAMLTRPO(MAMLNPO):
             if optimizer_args is None:
                 optimizer_args = dict()
             optimizer = ConjugateGradientOptimizer(**optimizer_args)
-        super(MAMLTRPO, self).__init__(optimizer=optimizer, **kwargs)
+        super(MAESN_TRPO, self).__init__(optimizer=optimizer, **kwargs)

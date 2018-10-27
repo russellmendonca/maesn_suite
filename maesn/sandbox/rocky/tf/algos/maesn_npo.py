@@ -4,7 +4,7 @@
 from rllab.misc import ext
 from rllab.misc.overrides import overrides
 import rllab.misc.logger as logger
-from sandbox.rocky.tf.algos.batch_maml_polopt import BatchMAMLPolopt
+from sandbox.rocky.tf.algos.batch_maesn_polopt import BatchMAESNPolopt
 from sandbox.rocky.tf.optimizers.penalty_lbfgs_optimizer import PenaltyLbfgsOptimizer
 from sandbox.rocky.tf.optimizers.first_order_optimizer import FirstOrderOptimizer
 from sandbox.rocky.tf.misc import tensor_utils
@@ -12,7 +12,7 @@ import tensorflow as tf
 from collections import OrderedDict
 
 
-class MAMLNPO(BatchMAMLPolopt):
+class MAESN_NPO(BatchMAESNPolopt):
     """
     Natural Policy Optimization.
     """
@@ -39,7 +39,7 @@ class MAMLNPO(BatchMAMLPolopt):
         self.step_size = step_size
         self.use_maml = use_maml
         self.kl_constrain_step = -1  # needs to be 0 or -1 (original pol params, or new pol params)
-        super(MAMLNPO, self).__init__(**kwargs)
+        super(MAESN_NPO, self).__init__(**kwargs)
 
     def make_vars(self, stepnum='0'):
         # lists over the meta_batch_size
