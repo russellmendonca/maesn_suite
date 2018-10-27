@@ -8,15 +8,16 @@ This code is based off of the rllab code repository and can be installed in the 
 The MAESN code uses the TensorFlow rllab version, so be sure to install TensorFlow v1.0+.
 
 ### Usage
-Scripts for running the experiments found in the paper are located in `launchers/`. The scripts are setup to use local_docker or ec2.
+Scripts for running the experiments found in the paper are located in `launchers/`. The scripts are setup to use local_docker or ec2. The MuJoCo environments are located in `rllab/envs/mujoco/`.
 
-For training : `python train.py algo --env envName`, where algo can be Maesn or LSBaseline, envName can be Ant, Pusher or Wheeled
+Training :
+`python train.py <algo> --env <envName>`, where algo can be Maesn or LSBaseline, envName can be Ant, Pusher or Wheeled.
 Hyperparameters can be set in the hyperparam_sweep file. For the LSBaseline, the `fast_learning_rate` must be set to 0.
 
-For testing : `python test.py algo --env envName --initial_params_file fileName --learning_rate rate --latent_dim latentDim`
-The meta-trained policy file must be placed in metaTrainedPolices, and its name is then passed to initial_params_file
-Make sure that the rate and latentDim used at testing are the same as the `fast_learning_rate` and `latent_dim` used at training
-The MuJoCo environments are located in `rllab/envs/mujoco/`.
+Testing : 
+`python test.py <algo> --env <envName> --initial_params_file <fileName> --learning_rate <rate> --latent_dim <latentDim>`.
+The meta-trained policy file must be placed in metaTrainedPolices, and its name is then passed to `initial_params_file`.
+Make sure that the rate and latentDim at testing are the same as the `fast_learning_rate` and `latent_dim` at training.
 
 ### aws ec2
 
