@@ -98,7 +98,8 @@ for counter, goal in enumerate(goals):
   
     run_experiment_lite(
         algo.train(),
-        # Number of parallel workers for sampling
+        # For this implementation, n_parallel has to be 1. Otherwise, the sparse and train attributes of the environment will be set to their default values
+        # Running on ec2 will parallelize testing, and hence give results much faster
         n_parallel=1,
         snapshot_mode="all",
         seed=1,

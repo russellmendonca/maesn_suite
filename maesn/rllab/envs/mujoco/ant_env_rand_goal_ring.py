@@ -66,7 +66,7 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
 
 
     def step(self, action):
-        #print(self.sparse)
+        print(self.sparse)
         self.forward_dynamics(action)
         com = self.get_body_com("torso")
         # ref_x = x + self._init_torso_x

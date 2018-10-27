@@ -95,7 +95,6 @@ class BatchPolopt(RLAlgorithm):
         self.whole_paths = whole_paths
         self.fixed_horizon = fixed_horizon
         if sampler_cls is None:
-            #sampler_cls = VectorizedSampler
             sampler_cls = BatchSampler
         if sampler_args is None:
             sampler_args = dict()
