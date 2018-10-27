@@ -13,8 +13,7 @@ Scripts for running the experiments found in the paper are located in `launchers
 Training :
 
 `python train.py <algo> --env <envName>`, where algo can be Maesn or LSBaseline, envName can be Ant, Pusher or Wheeled.
-
-Hyperparameters can be set in the hyperparam_sweep file. For the LSBaseline, the `fast_learning_rate` must be set to 0.
+Hyperparameters can be set in the hyperparam_sweep file. For the LSBaseline, the `fast_learning_rate` must be 0.
 
 Testing : 
 
